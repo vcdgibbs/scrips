@@ -34,6 +34,25 @@ class Colores:
         cyan='\033[46m'
         lightgrey='\033[47m'
 
+
+def valid_ip(address):
+    try:
+        host_bytes = address.split('.')
+        valid = [int(b) for b in host_bytes]
+        valid = [b for b in valid if b >= 0 and b<=255]
+        return len(host_bytes) == 4 and len(valid) == 4
+    except:
+        return False
+
+def is_number(n):
+       try:
+           float(n)   # Type-casting the string to `float`.
+                      # If string is not a valid `float`, 
+                      # it'll raise `ValueError` exception
+       except ValueError:
+           return False
+       return True
+
 # Fucntion to get a dict class with parameter
 '''
 The idea is the convert params of:
@@ -44,17 +63,15 @@ so "-param1 val1" will be a key:value pair as {"param1":"val1"}
 and 
 if "option1" is text, it will we a key:value pair as {"option1":True}
 if "option1" is a number, it will be as {"option1":number} 
-'''
-def is_number(n):
-       try:
-           float(n)   # Type-casting the string to `float`.
-                      # If string is not a valid `float`, 
-                      # it'll raise `ValueError` exception
-       except ValueError:
-           return False
-       return True
 
-def params(args):
+Note: All params will be converted to lowercase, values and options will be as entered, for example:
+
+$ comamand -PaRams1 Val1 Option1 oPtiOn2  will take the following form:
+
+returned={'params1'='Val1', 'Option1'=1, 'oPtiOn2'=1}
+'''
+
+def params2dict(args):
     #print(len(args))
     # args[0] -> comando mismo
     # args[1] .. args[n] -> parametros
@@ -67,21 +84,25 @@ def params(args):
     while i<len(args):
         try:
             if args[i][0] == "-":
-                # We expect a value for a parameter, so next argument cant begin with '-'
+                # We expect a value for a parameter, so next argument can't begin with '-'
                 if args[i+1][0] == "-":
-                    p={"error":"expected value"}
+                    p={"error":"expected value for " + args[i]}
                     break
                 #print("está " + args[i][0] + " bien?" +args[i])
                 temp=args[i].strip('-')
-                p[temp]=args[i+1]
+                p[temp.lower()]=args[i+1]
                 i+=2
             else:
                 if is_number(args[i]):
                         nopt = "option" + str(on)
-                        p[nopt]=args[i]
+                        # is the number an 'int' or 'float'?  - check whether there is a decimal dot.
+                        if args[i].count(".")==1:
+                            p[nopt]=float(args[i])
+                        else:
+                            p[nopt]=int(args[i])
                         on+=1
                 else:
-                    p[args[i]]=True
+                    p[args[i]]=1
                 i+=1
             #p[args[i]]=args[i+1]
         except:
@@ -91,11 +112,18 @@ def params(args):
         
     return p
 
+# Just an easy way...
+def printInfo(msg):
+    print(Colores.fg.green+"[INFO] "+msg+Colores.reset)
+    return 1
 
+def printError(msg):
+    print(Colores.fg.red+"[ERROR] "+msg+Colores.reset)
+    return 1
 
-
-
-
+def printWarning(msg):
+    print(Colores.fg.yellow+"[WARNING] "+msg+Colores.reset)
+    return 1
 
 
 
