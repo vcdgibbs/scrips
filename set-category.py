@@ -51,8 +51,7 @@ Author: Victor D'Gibbs (victor.dgibbs@nutanix.com)
 Revision:  February 5, 2021
 
 (1) -vm and -sourceCSV are mutually exclusive, you one or the another one, but never toghether.
-(2) CSV files can't have duplicated VMs, i.e. if you want to set or more categories to the same VM, 
-    please user different files for the same VM.
+(2) VM can't have duplicated names in the cluster, I can't decide the correct UUID.
 '''
 
 
@@ -191,7 +190,7 @@ def Prism_API_Call(Method, URL, Credentials, Payload=None):
         else:
             r = requests.get(URL, auth=(us,pw), json=Payload, verify=False)
         # print(r.status_code)
-        # Quiero entregar el status_code?
+        # Quiero entregar el status_code? del bloque siguiente:
         if r.status_code==200:
             printInfo("- all good, response code " + str(r.status_code) + " as expected :)")
         else:
@@ -204,8 +203,9 @@ def Prism_API_Call(Method, URL, Credentials, Payload=None):
         if Payload == None:
             r = requests.post(URL, auth=(us,pw), verify=False)
         else:
-            print(pl)
-            print(type(pl))
+            # Control:
+            # print(pl)
+            # print(type(pl))
             r = requests.post(URL, auth=(us,pw), json=Payload, verify=False)
             # print(r.status_code)
             # Quiero entregar el status_code?
@@ -220,14 +220,13 @@ def Prism_API_Call(Method, URL, Credentials, Payload=None):
     ret =  r.json()
     if "code" not in ret:
         ret["code"]=r.status_code
-    
-    # print(resp.status_code)
-    # print(resp)
+    #print(type(ret))
     return ret
 
 for VMS in myListVMs:
     #print(VMS)
     #print(myListVMs[VMS]["vm_name"])
+    printInfo(Colores.reverse + "Let's process VM name \'" + myListVMs[VMS]["vm_name"] + "\'.")
     if myListVMs[VMS]["vm_name"][0] == "#":
         printInfo(myListVMs[VMS]["vm_name"].strip("#") + " marked with #, will do nothing with this one.")
         continue
@@ -245,13 +244,13 @@ for VMS in myListVMs:
         resp["code"]=200
     try:
         if resp["code"]!=200:
-            printWarning("Category " + Category + ":" + Value + " NOT found in " + PC_IP)
+            printWarning("Category " + Category + ":" + Value + " NOT found in " + PC_IP + ". (Categories and Values are case sensitive)")
             continue
         else:
             printInfo("Category " + Category + ":" + Value + " found in " + PC_IP)
     except:
         #print(Colores.fg.green + "[INFO] Category " + Category + ":" + Value + " found in " + PC_IP)
-        printError("Unexpected error. ###################")
+        printError("Unexpected error.")
         exit(1)
 
     ###############################################################
@@ -267,10 +266,46 @@ for VMS in myListVMs:
         "filter": flt
         }
     print(type(pl))
-    vd = Prism_API_Call("POST",comURL,PrismCreds,pl)
-    print(vd)
+    try:
+        vd = Prism_API_Call("POST",comURL,PrismCreds,pl)
+        tvm = vd["metadata"]["total_matches"]
+        if tvm==0:
+            printWarning("VM name \'" + myListVMs[VMS]["vm_name"] + "\' does not exist the cluster. (Names are case sensitive)")
+            continue
+        if tvm > 1:
+            printWarning("There are " + str(tvm) + " with VM with the same name \'" + myListVMs[VMS]["vm_name"] + "\'. Skiiping the VM")
+            continue
+    except:
+            printError("Something get wrong, finishing")
+            exit(1)
+    
+    print(json.dumps(vd, indent=2))
+    print(vd.keys())
+    t_vm=vd["entities"][0]
+    #print(Colores.fg.yellow)
+    #print(type(t_vm))
+    #print(json.dumps(t_vm, indent=2))
 
-
+    #t_vm=vd.get("entities")
+    #print("t_vm es una:")
+    #print(type(t_vm))
+    #print(len(t_vm))
+    # solo tiene 1 elemento la lista, debo procesarlo más
+    
+    print(Colores.reset)
+    print(Colores.fg.orange + "#################### asignar VM_Config ########################")
+    #print(t_vm["spec"])
+    VM_Config={"spec":t_vm["spec"]}
+    #print(type(VM_Config))
+    print(json.dumps(VM_Config, indent=2))
+    
+    print(Colores.reset + "#################### Obtener UUID ########################")
+    VM_md={"metadata":t_vm["metadata"]}
+    #print(type(VM_md))
+    #print(json.dumps(VM_md, indent=2))
+    VM_UUID=VM_md["metadata"]["uuid"]
+    print("UUID de la VM: "+ VM_UUID)
+    
 '''
 ## acli vm.get uuid -> JSON de la VM
 VM_UUID="a06a4857-0d0a-4ca0-a90c-aabcaf11ed7a"
