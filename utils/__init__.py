@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import datetime
+
 class Colores:
     reset='\033[0m'
     bold='\033[01m'
@@ -114,15 +116,18 @@ def params2dict(args):
 
 # Just an easy way...
 def printInfo(msg):
-    print(Colores.fg.green+"[INFO] "+msg+Colores.reset)
+    fh=str(datetime.datetime.now())
+    print(fh + Colores.fg.green + " [INFO] " + msg + Colores.reset)
     return 1
 
 def printError(msg):
-    print(Colores.fg.red+"[ERROR] "+msg+Colores.reset)
+    fh=str(datetime.datetime.now())
+    print(fh + Colores.fg.red + " [ERROR] " + msg + Colores.reset)
     return 1
 
 def printWarning(msg):
-    print(Colores.fg.yellow+"[WARNING] "+msg+Colores.reset)
+    fh=str(datetime.datetime.now())
+    print(fh + Colores.fg.yellow + " [WARNING] " + msg + Colores.reset)
     return 1
 
 

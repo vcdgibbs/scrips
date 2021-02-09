@@ -19,7 +19,17 @@ Parameters:
 
    -sourceCSV <csv_file> : Indicate the path of a comma separated file including a list of VMs to modify. (1)(2)
                       The format of each line (with headers) is: 
+
                       vm_name,category_name,category_value.
+
+                      You can comment some VMs with '#' at the begining of the VM name, so those VMs will not be 
+                      assigned to the Category:Value specified. e.g.
+
+                      vm01, Environment, Production
+                      #vm02, Evironment, Dev
+
+                      In this example, vm01 will be assigned to Environment:Production, vm02 will be skipped.
+                    
 
    -category <category_name> : Name of the category to assign to the vm (which must already exists in Prism Central). 
 
@@ -78,6 +88,13 @@ if "help" in pars:
 if "prism" in pars:
     if valid_ip(pars['prism']):
         PC_IP=pars["prism"]
+        try:
+            t_url="https://"+PC_IP+":9440/console/#login"
+            r1 = requests.get(t_url, verify=False)
+        except:
+            printError("Trying to go to "+ t_url + ", but it is unreachable, is the Prism Central IP address " + PC_IP + " Correct?")
+            exit(1)
+
     else:
         print(Colores.fg.red+"[Error] Please provide a valid IP address." + Colores.reset)
         exit(1)
@@ -115,7 +132,9 @@ if ("sourcecsv" in pars):
                 myListVMs={}
                 line_count += 1
             else:
-                #print(f'\t{row[0]} works in the {row[1].strip()} department, and was born in {row[2].strip()}.')
+                # Make sure row has 3 values
+                if len(row) != 3:
+                    continue
                 nn=row[0].strip()
                 cc=row[1].strip()
                 vv=row[2].strip()
@@ -157,73 +176,100 @@ PrismCreds = {
     "User" : User,
     "Password" : Password
     }
-headers = {'ContentType':'application/json','cache-control': 'no-cache'}
+headers = {'ContentType':'application/json','cache-control': 'no-cache','Accept':'application/json'}
 
 # API Calls to Prism Central
 def Prism_API_Call(Method, URL, Credentials, Payload=None):
-    print(Colores.fg.green +"[INFO] Making a ", Method, " call to ", URL, Colores.reset)
+    printInfo("Making a " + Method + " call to " + URL)
+    us=Credentials["User"]
+    pw=Credentials["Password"]
+   
+    # GET
     if Method == "GET":
-        # Payload not needed.
-        us=Credentials["User"]
-        pw=Credentials["Password"]
-        r = requests.get(URL, auth=(us,pw), verify=False)
-        # print(r.status_code)
-        if r.status_code==200:
-            print(Colores.fg.green +"[INFO] - all good, response code ", r.status_code, " as expected :)", Colores.reset)
+        if Payload == None:
+            r = requests.get(URL, auth=(us,pw), verify=False)
         else:
-            print(Colores.fg.red+"[ERROR] - Response code ", r.status_code, Colores.reset)
-            t=json.dumps(r.json())
-            print (t)
-    # Python returns a "dict" with the JSON info, so returned value should be json.dumps('d) in order to use it as JSON in another API Call.  
-    return r.json()
+            r = requests.get(URL, auth=(us,pw), json=Payload, verify=False)
+        # print(r.status_code)
+        # Quiero entregar el status_code?
+        if r.status_code==200:
+            printInfo("- all good, response code " + str(r.status_code) + " as expected :)")
+        else:
+            printError("- Response code " + str(r.status_code))
+            #t=json.dumps(r.json())
+            #print (t)
+    
+    # POST
+    if Method == "POST":
+        if Payload == None:
+            r = requests.post(URL, auth=(us,pw), verify=False)
+        else:
+            print(pl)
+            print(type(pl))
+            r = requests.post(URL, auth=(us,pw), json=Payload, verify=False)
+            # print(r.status_code)
+            # Quiero entregar el status_code?
+        if r.status_code==200:
+            printInfo("- all good, response code " + str(r.status_code) + " as expected :)")
+        else:
+            printError("- Response code " + str(r.status_code))
 
 
-# print(resp.status_code)
-# print(resp)
-
-##################
-### Aquí empieza lo weno...
-##################
-# Category="Environment"
-# Value="Production"
+    # Python returns a "dict" with the JSON info, so returned value should be json.dumps('d) in order to use it as JSON in another API Call.
+    # if returned JSON hasn't status code, I add it to the Dictionay.
+    ret =  r.json()
+    if "code" not in ret:
+        ret["code"]=r.status_code
+    
+    # print(resp.status_code)
+    # print(resp)
+    return ret
 
 for VMS in myListVMs:
     #print(VMS)
     #print(myListVMs[VMS]["vm_name"])
-
-# 1. Does Category exist?
+    if myListVMs[VMS]["vm_name"][0] == "#":
+        printInfo(myListVMs[VMS]["vm_name"].strip("#") + " marked with #, will do nothing with this one.")
+        continue
+    ###############################################################
+    # 1. Does Category exist?
+    ###############################################################
     Category = myListVMs[VMS]["category_name"]
     Value = myListVMs[VMS]["value_name"]
-
-    #print(Colores.fg.green + "[INFO] Checking " + Category + ":" + Value + " exists in " + PC_IP)
-    printInfo("Checking " + Category + ":" + Value + " exists in " + PC_IP)
+    printInfo("Checking whether " + Category + ":" + Value + " exists in " + PC_IP)
     comURL=API_Server_End_Point + "categories/" +  Category + "/" + Value
     Method="GET"
-    print(comURL)
-    ############################
-    # resp = Prism_API_Call(Method,comURL,PrismCreds)
-    # print(json.dumps(resp))
-    # R = json.dumps(resp)
-    # print(R["code"])
-
-    ### temporal
-    resp={}
-    resp["code"]=201
-    ####
+    resp = Prism_API_Call(Method,comURL,PrismCreds)
+    # resp is a 'dict' field    
+    if "code" not in resp:
+        resp["code"]=200
     try:
-
         if resp["code"]!=200:
-            #print(Colores.fg.red +"[ERROR] - Category " + Category + ":" + Value + " NOT found in " + PC_IP)
-            printError("Category " + Category + ":" + Value + " NOT found in " + PC_IP)
+            printWarning("Category " + Category + ":" + Value + " NOT found in " + PC_IP)
             continue
         else:
             printInfo("Category " + Category + ":" + Value + " found in " + PC_IP)
     except:
-        print(Colores.fg.green + "[INFO] Category " + Category + ":" + Value + " found in " + PC_IP)
-        printError("Unexpected error.")
-        #exit(1)
+        #print(Colores.fg.green + "[INFO] Category " + Category + ":" + Value + " found in " + PC_IP)
+        printError("Unexpected error. ###################")
+        exit(1)
 
-    print("Esto no debería aparecer pues todos los status code son != 200")
+    ###############################################################
+    # 2. Get VM details
+    ###############################################################
+   
+    # Let's get the VM UUID
+    # VM_UUID = {}
+    comURL=API_Server_End_Point + "vms/list"
+    flt="vm_name==" + myListVMs[VMS]["vm_name"]
+    pl={
+        "kind":"vm",
+        "filter": flt
+        }
+    print(type(pl))
+    vd = Prism_API_Call("POST",comURL,PrismCreds,pl)
+    print(vd)
+
 
 '''
 ## acli vm.get uuid -> JSON de la VM

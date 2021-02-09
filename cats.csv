@@ -1,4 +1,6 @@
 vm_name,category_name,category_value
-vm01,Sistema,SAT
+vm01,Environment,Production
 vm02, Sistema,Akgi
-vm03,           Sistema,      valor#3
+AutoAD,Environment,Production
+
+#vm03, Environment,Dev
