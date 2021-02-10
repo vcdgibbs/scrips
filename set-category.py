@@ -55,6 +55,7 @@ Revision:  February 5, 2021
 (2) VM can't have duplicated names in the cluster, I can't decide the correct UUID.
 
 To do:
+- Explicit error for bad user or password
 - Log file
 '''
 
