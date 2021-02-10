@@ -1,7 +1,8 @@
 vm_name,category_name,category_value
+LinuxWS,Environment, Dev
 vm01,Environment,Production
-vm02, Sistema,Akgi
-AutoAD,Environment,Production
+vm02, Ambiente,Desarrollo
 
 #vm03, Environment,Dev
-vm02,Sistema,produccion
+vm04,AppType,TM
+vm05,AppTier,LoadBalancer
