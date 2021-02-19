@@ -12,11 +12,9 @@ Description:  This script can be used to add or remove categories from VMs in Pr
 Parameters:
 
    -prism <ip>      : IP of Prism Central.
-
    -user <username> : username who will execute the commands.
-
+   -password <pwd>  : username's password (optional)
    -vm <vm_name>    : name of the VM to edit (as displayed in Prism Central)  (1)
-
    -sourceCSV <csv_file> : Indicate the path of a comma separated file including a list of VMs to modify. (1)(2)
                       The format of each line (with headers) is: 
 
@@ -29,19 +27,14 @@ Parameters:
                       vm01, Environment, Production
                       #vm02, Evironment, Dev
 
-                      In this example, vm01 will be assigned to Environment:Production, vm02 will be skipped.
-                    
-
+                      In this example, vm01 will be assigned to Environment:Production, vm02 will be skipped.                  
    -category <category_name> : Name of the category to assign to the vm (which must exists in Prism Central). 
-
    -value <value_name>  : Value for the category to assign to the vm (which must also exists in Prism Central).
 
 Options:
 
    add     : Adds the specified category:value to VM.
-
    remove  : Removes the specified category:value to VM.
-
    help    : display this text as help.
 
 Link:  https://github.com/vcdgibbs/scripts
@@ -159,7 +152,11 @@ else:
         printError("Please provide the VM with Category and Value information or CSV file")
 
 # Enter password:
-Password = stdiomask.getpass()
+#Password = stdiomask.getpass()
+if "password" in pars:
+    Password = pars["password"]
+else:
+    Password = stdiomask.getpass()
 
 
 # Variables

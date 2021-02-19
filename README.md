@@ -3,12 +3,13 @@
 `set-category.py` allows you to set or unset categories to VMs. the format could be:
 
 ```
-$ set-category.py -prism <ip_prism_central> -user <prism_central_usarname> -vm <vm_name> -category <category_name> -value <value_name> add|remove
+$ set-category.py -prism <ip_prism_central> -user <prism_central_usarname> -password <password> -vm <vm_name> -category <category_name> -value <value_name> add|remove
 ```
 or you can specify a file.csv with
 ```
-$ set-category.py -prism <ip_prism_central> -user <prism_central_usarname> -sourceCSV <your_file.csv> add|remove
+$ set-category.py -prism <ip_prism_central> -user <prism_central_usarname> -password <password> -sourceCSV <your_file.csv> add|remove
 ```
+Password is optional, you will be asked.
 
 ...select `add` or `remove` in the command... self explanatory, doesn't it?
 
@@ -33,7 +34,7 @@ vm05, System, File Server
 ```
 $ get-vm-info.py -prism <ip_prism_central> [-user <prism_central_usarname>] [-password <password>] -vm <vm_name> [-indent <#>] uuid|spec|status
 ```
-parameters in [ ] are optional, username and password will be prompt if not provided as parameters.
+parameters in [ ] are optional, username and password will be asked if not provided as parameters.
 
 you will get:
 
