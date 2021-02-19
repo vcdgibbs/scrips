@@ -29,3 +29,14 @@ vm05, System, File Server
 - Empty rows or with less|more that 3 columns will be omitted.
 ---
 
+`get-vm-info.py` allows you to get information about a VM. the format is:
+```
+$ get-vm-info.py -prism <ip_prism_central> [-user <prism_central_usarname>] [-password <password>] -vm <vm_name> [-indent <#>] uuid|spec|status
+```
+parameters in [ ] are optional, username and password will be prompt if not provided as parameters.
+
+you will get:
+
+The vm UUID if `uuid`is selected, the vm `spec` configuration in json format or the vm `status` in json format.
+
+JSON will be written in a single line unless you specify the `indent` parameter. `indent` can be any numbre from 1 to 8.
